@@ -1,65 +1,86 @@
-const CACHE_NAME = 'alarm-clock-cache-v1';
+const CACHE_NAME = 'neumorphic-alarm-clock-v1';
 const urlsToCache = [
   '/',
   '/index.html',
-  // If you extract your <style> block to a separate CSS file, add it here:
-  // '/style.css', 
-  // If you extract your <script> block to a separate JS file, add it here:
-  // '/script.js', 
-  '/sounds/default_chime.mp3',
-  '/sounds/default_bell.mp3',
-  '/sounds/default_horn.mp3',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
+  '/manifest.json',
+  '/images/icon-192x192.png', /* Make sure these paths are correct */
+  '/images/icon-512x512.png', /* Make sure these paths are correct */
   'https://cdn.tailwindcss.com',
   'https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js',
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap',
-  'https://fonts.gstatic.com' // Important for fonts to load offline
+  'https://fonts.gstatic.com', /* Needed for the font to load */
+  /* Add paths to your default sound files here */
+  '/sounds/default_chime.mp3',
+  '/sounds/default_bell.mp3',
+  '/sounds/default_horn.mp3'
 ];
 
-// Install event: cache assets
-self.addEventListener('install', event => {
+self.addEventListener('install', (event) => {
+  console.log('Service Worker: Installing...');
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Opened cache');
+      .then((cache) => {
+        console.log('Service Worker: Caching app shell');
         return cache.addAll(urlsToCache);
+      })
+      .catch((error) => {
+        console.error('Service Worker: Cache addAll failed', error);
       })
   );
 });
 
-// Fetch event: serve from cache or network
-self.addEventListener('fetch', event => {
+self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request)
-      .then(response => {
+      .then((response) => {
         // Cache hit - return response
         if (response) {
           return response;
         }
-        // No cache hit - fetch from network
-        return fetch(event.request).catch(() => {
-            // If network also fails, return a fallback for navigation requests
-            if (event.request.mode === 'navigate') {
-                return caches.match('/index.html'); // Fallback to your main page
-            }
-        });
+        return fetch(event.request);
       })
   );
 });
 
-// Activate event: clean up old caches
-self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
+self.addEventListener('activate', (event) => {
+  console.log('Service Worker: Activating...');
+  // Clean up old caches
   event.waitUntil(
-    caches.keys().then(cacheNames => {
+    caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            console.log('Service Worker: Deleting old cache', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
     })
+  );
+});
+
+// Optional: Handle push notifications (for future use if you implement them)
+self.addEventListener('push', (event) => {
+  const data = event.data.json();
+  console.log('Push received:', data);
+  const title = data.title || 'Alarm Clock';
+  const options = {
+    body: data.body || 'Your alarm is ringing!',
+    icon: '/images/icon-192x192.png',
+    badge: '/images/icon-192x192.png', // A smaller icon for notification tray
+    vibrate: [200, 100, 200],
+    data: {
+      url: data.url || self.location.origin // URL to open when notification is clicked
+    }
+  };
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.openWindow(event.notification.data.url)
   );
 });

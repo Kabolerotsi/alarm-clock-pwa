@@ -1,19 +1,19 @@
 {
-  "name": "Puzzle Alarm Clock",
+  "name": "Neumorphic Alarm Clock",
   "short_name": "Alarm Clock",
-  "description": "A neumorphic alarm clock with puzzles to wake you up!",
+  "description": "A stylish alarm clock with math and order puzzles.",
   "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#e0f2fe",
   "theme_color": "#ef4444",
   "icons": [
     {
-      "src": "/icons/icon-192x192.png",
+      "src": "/images/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icons/icon-512x512.png",
+      "src": "/images/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
